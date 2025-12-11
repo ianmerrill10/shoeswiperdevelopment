@@ -1,0 +1,35 @@
+[project]
+id = "shoeswiper"
+name = "ShoeSwiper"
+
+[api]
+enabled = true
+
+[db]
+enabled = true
+
+[studio]
+enabled = true
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+
+[functions.amazon-prices]
+enabled = true
+verify_jwt = false
+
+[functions.email-capture]
+enabled = true
+verify_jwt = false
+
+[functions.check-price-alerts]
+enabled = true
+verify_jwt = true
+# Schedule: every 4 hours
+schedule = "0 */4 * * *"
+
+[edge_runtime]
+policy = "oneshot"
