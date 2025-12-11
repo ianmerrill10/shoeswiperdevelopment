@@ -1,5 +1,5 @@
-import React from 'react';
-import { FaTimes, FaSpotify, FaApple, FaAmazon } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaTimes, FaSpotify, FaApple, FaAmazon, FaPlay, FaHeart, FaMusic } from 'react-icons/fa';
 import { Shoe } from '../lib/types';
 import { useAnalytics, MusicPlatform } from '../hooks/useAnalytics';
 
@@ -12,6 +12,7 @@ interface MusicPanelProps {
 const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
   const music = shoe.music;
   const { trackMusicClick } = useAnalytics();
+  const [liked, setLiked] = useState(false);
 
   const handleMusicClick = (platform: MusicPlatform, url: string) => {
     if (music) {
@@ -20,23 +21,17 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
     window.open(url, '_blank');
   };
 
-  // Generate a placeholder album art based on artist name
-  const getAlbumArt = (artist: string) => {
-    const colors: Record<string, string> = {
-      'Travis Scott': 'from-amber-900 to-black',
-      'Drake': 'from-zinc-800 to-black',
-      'Kendrick Lamar': 'from-red-900 to-black',
-      'Kanye West': 'from-purple-900 to-black',
-      'Daft Punk': 'from-cyan-900 to-black',
-      'The Weeknd': 'from-red-800 to-black',
-      'Dua Lipa': 'from-pink-800 to-black',
-    };
-    return colors[artist] || 'from-orange-900 to-black';
+  // Extract Spotify track ID from URL for embed
+  const getSpotifyTrackId = (url: string): string | null => {
+    const match = url.match(/track\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
   };
 
   if (!music) {
     return null;
   }
+
+  const spotifyTrackId = music.spotifyUrl ? getSpotifyTrackId(music.spotifyUrl) : null;
 
   return (
     <>
@@ -60,7 +55,10 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
       >
         {/* Header */}
         <div className="sticky top-0 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800 p-4 flex items-center justify-between z-10">
-          <h2 id="music-panel-title" className="text-lg font-bold text-white">Now Playing</h2>
+          <h2 id="music-panel-title" className="text-lg font-bold text-white flex items-center gap-2">
+            <FaMusic className="text-orange-500" />
+            Now Playing
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close music panel"
@@ -70,65 +68,64 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Album Art */}
-        <div className={`aspect-square bg-gradient-to-br ${getAlbumArt(music.artist)} flex items-center justify-center relative`}>
-          {/* Spinning vinyl effect */}
-          <div className="w-64 h-64 rounded-full bg-black/50 flex items-center justify-center animate-spin-slow">
-            <div className="w-48 h-48 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center border-4 border-zinc-700">
-              <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full bg-black" />
-              </div>
-            </div>
+        {/* Spotify Embed Player - PLAYS ACTUAL MUSIC */}
+        {spotifyTrackId && (
+          <div className="p-4 bg-zinc-900">
+            <iframe
+              src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=0`}
+              width="100%"
+              height="152"
+              frameBorder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              className="rounded-xl"
+              title={`${music.song} by ${music.artist}`}
+            />
+            <p className="text-zinc-500 text-xs text-center mt-2">
+              ▶️ Press play above to preview
+            </p>
           </div>
-
-          {/* Sound wave animation */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <div
-                key={i}
-                className="w-1 bg-orange-500 rounded-full animate-pulse"
-                style={{
-                  height: `${Math.random() * 20 + 10}px`,
-                  animationDelay: `${i * 0.1}s`,
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Song Info */}
         <div className="p-6 text-center border-b border-zinc-800">
           <h3 className="text-2xl font-black text-white mb-2">{music.song}</h3>
-          <p className="text-lg text-zinc-400">{music.artist}</p>
+          <p className="text-lg text-zinc-400 mb-4">{music.artist}</p>
+
+          {/* Like Button */}
+          <button
+            onClick={() => setLiked(!liked)}
+            className={`inline-flex items-center gap-2 px-6 py-2 rounded-full font-bold transition-all ${
+              liked
+                ? 'bg-red-500 text-white'
+                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+            }`}
+          >
+            <FaHeart className={liked ? 'text-white' : ''} />
+            {liked ? 'Liked!' : 'Like this song'}
+          </button>
         </div>
 
-        {/* Streaming Links */}
-        <div className="p-6 space-y-4">
-          <p className="text-zinc-500 text-sm text-center mb-4">Listen on your favorite platform</p>
+        {/* GET THE FULL SONG - Affiliate Links */}
+        <div className="p-6 space-y-3">
+          <div className="text-center mb-4">
+            <h4 className="text-white font-bold text-lg mb-1">🎵 Get the Full Song</h4>
+            <p className="text-zinc-500 text-sm">Stream or download on your favorite platform</p>
+          </div>
 
-          {/* Spotify */}
-          {music.spotifyUrl && (
-            <button
-              onClick={() => handleMusicClick('spotify', music.spotifyUrl!)}
-              aria-label={`Play ${music.song} by ${music.artist} on Spotify`}
-              className="w-full flex items-center gap-4 bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-4 px-6 rounded-xl transition-colors"
-            >
-              <FaSpotify className="text-2xl" aria-hidden="true" />
-              <span className="flex-1 text-left">Play on Spotify</span>
-              <span className="text-sm opacity-75">Free</span>
-            </button>
-          )}
-
-          {/* Apple Music */}
+          {/* Apple Music - Best affiliate rates */}
           {music.appleMusicUrl && (
             <button
               onClick={() => handleMusicClick('apple_music', music.appleMusicUrl!)}
-              aria-label={`Play ${music.song} by ${music.artist} on Apple Music`}
-              className="w-full flex items-center gap-4 bg-gradient-to-r from-[#FA57C1] to-[#FC5C7D] hover:opacity-90 text-white font-bold py-4 px-6 rounded-xl transition-opacity"
+              aria-label={`Get ${music.song} on Apple Music`}
+              className="w-full flex items-center gap-4 bg-gradient-to-r from-[#FA57C1] to-[#FC5C7D] hover:opacity-90 text-white font-bold py-4 px-6 rounded-xl transition-opacity shadow-lg"
             >
-              <FaApple className="text-2xl" aria-hidden="true" />
-              <span className="flex-1 text-left">Play on Apple Music</span>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded">Affiliate</span>
+              <FaApple className="text-3xl" aria-hidden="true" />
+              <div className="flex-1 text-left">
+                <span className="block">Get on Apple Music</span>
+                <span className="text-xs opacity-75">Free trial available</span>
+              </div>
+              <FaPlay className="text-sm" />
             </button>
           )}
 
@@ -136,19 +133,38 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
           {music.amazonMusicUrl && (
             <button
               onClick={() => handleMusicClick('amazon_music', music.amazonMusicUrl!)}
-              aria-label={`Play ${music.song} by ${music.artist} on Amazon Music`}
-              className="w-full flex items-center gap-4 bg-[#00A8E1] hover:bg-[#00bfff] text-white font-bold py-4 px-6 rounded-xl transition-colors"
+              aria-label={`Get ${music.song} on Amazon Music`}
+              className="w-full flex items-center gap-4 bg-[#00A8E1] hover:bg-[#00bfff] text-white font-bold py-4 px-6 rounded-xl transition-colors shadow-lg"
             >
-              <FaAmazon className="text-2xl" aria-hidden="true" />
-              <span className="flex-1 text-left">Play on Amazon Music</span>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded">Affiliate</span>
+              <FaAmazon className="text-3xl" aria-hidden="true" />
+              <div className="flex-1 text-left">
+                <span className="block">Buy on Amazon Music</span>
+                <span className="text-xs opacity-75">Own it forever</span>
+              </div>
+              <FaPlay className="text-sm" />
+            </button>
+          )}
+
+          {/* Spotify - Free option */}
+          {music.spotifyUrl && (
+            <button
+              onClick={() => handleMusicClick('spotify', music.spotifyUrl!)}
+              aria-label={`Open ${music.song} in Spotify`}
+              className="w-full flex items-center gap-4 bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-4 px-6 rounded-xl transition-colors shadow-lg"
+            >
+              <FaSpotify className="text-3xl" aria-hidden="true" />
+              <div className="flex-1 text-left">
+                <span className="block">Open in Spotify</span>
+                <span className="text-xs opacity-75">Free with ads</span>
+              </div>
+              <FaPlay className="text-sm" />
             </button>
           )}
         </div>
 
-        {/* Paired With */}
+        {/* Paired With Sneaker */}
         <div className="p-6 border-t border-zinc-800">
-          <p className="text-zinc-500 text-sm mb-3">Paired with</p>
+          <p className="text-zinc-500 text-sm mb-3">🔥 Paired with</p>
           <div className="flex items-center gap-4 bg-zinc-900 p-4 rounded-xl">
             <img
               src={shoe.image_url}
@@ -165,7 +181,7 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
         {/* Tip */}
         <div className="p-6 pb-8">
           <p className="text-zinc-600 text-xs text-center">
-            Swipe through the feed to discover more music paired with sneakers
+            🎧 Discover music that matches your sneaker style
           </p>
         </div>
       </div>
