@@ -6,22 +6,14 @@ This file tracks ongoing issues, bugs, and problems that need attention. AI agen
 
 ## Active Issues
 
-### High Priority
-
-1. **Music Not Playing**
-   - Status: Not implemented
-   - Description: Music bar shows song info but no actual audio playback
-   - File: `src/pages/FeedPage.tsx`, `src/components/MusicPanel.tsx`
-   - Solution needed: Implement audio player or link to music streaming services
-
 ### Medium Priority
 
-2. **GitHub Push Pending**
+1. **AWS Amplify Connection Pending**
    - Status: In progress
-   - Description: Need to push to GitHub and connect AWS Amplify
-   - Next steps: Create GitHub repo, push code, connect Amplify
+   - Description: GitHub repo created, need to connect AWS Amplify for CI/CD
+   - Next steps: Connect Amplify to GitHub repo in AWS Console
 
-3. **PWA Icons Missing**
+2. **PWA Icons Missing**
    - Status: Not started
    - Description: manifest.json references icon-192.png and icon-512.png but files don't exist
    - File: `public/manifest.json`
@@ -44,6 +36,8 @@ This file tracks ongoing issues, bugs, and problems that need attention. AI agen
 2. ~~Broken images (Unsplash)~~ - Replaced with brand CDN URLs
 3. ~~Like/Save button conflict~~ - Changed bookmark to open details panel
 4. ~~UI overlapping shoe image~~ - Redesigned to split layout
+5. ~~Music not playing~~ - Added Spotify embed player with 30-sec previews
+6. ~~GitHub push~~ - Pushed to https://github.com/ianmerrill10/shoeswiperdevelopment
 
 ---
 
