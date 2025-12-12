@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaSpotify, FaApple, FaAmazon, FaPlay, FaHeart, FaMusic } from 'react-icons/fa';
+import { FaTimes, FaApple, FaAmazon, FaPlay, FaHeart, FaMusic } from 'react-icons/fa';
 import { Shoe } from '../lib/types';
 import { useAnalytics, MusicPlatform } from '../hooks/useAnalytics';
 
@@ -140,22 +140,6 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
               <div className="flex-1 text-left">
                 <span className="block">Buy on Amazon Music</span>
                 <span className="text-xs opacity-75">Own it forever</span>
-              </div>
-              <FaPlay className="text-sm" />
-            </button>
-          )}
-
-          {/* Spotify - Free option */}
-          {music.spotifyUrl && (
-            <button
-              onClick={() => handleMusicClick('spotify', music.spotifyUrl!)}
-              aria-label={`Open ${music.song} in Spotify`}
-              className="w-full flex items-center gap-4 bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-4 px-6 rounded-xl transition-colors shadow-lg"
-            >
-              <FaSpotify className="text-3xl" aria-hidden="true" />
-              <div className="flex-1 text-left">
-                <span className="block">Open in Spotify</span>
-                <span className="text-xs opacity-75">Free with ads</span>
               </div>
               <FaPlay className="text-sm" />
             </button>
