@@ -54,10 +54,10 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
         }`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800 p-4 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-gradient-to-r from-orange-600 to-orange-500 p-4 flex items-center justify-between z-10">
           <h2 id="music-panel-title" className="text-lg font-bold text-white flex items-center gap-2">
-            <FaMusic className="text-orange-500" />
-            Now Playing
+            <FaMusic className="text-white animate-bounce" />
+            🎧 Music Ready!
           </h2>
           <button
             onClick={onClose}
@@ -70,19 +70,23 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
 
         {/* Spotify Embed Player - PLAYS ACTUAL MUSIC */}
         {spotifyTrackId && (
-          <div className="p-4 bg-zinc-900">
+          <div className="p-4 bg-gradient-to-b from-orange-500/20 to-zinc-900">
+            {/* Big Play Prompt */}
+            <div className="text-center mb-3 animate-pulse">
+              <p className="text-white font-bold text-lg">👆 TAP PLAY TO START MUSIC 👆</p>
+            </div>
             <iframe
               src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=0`}
               width="100%"
               height="152"
               frameBorder="0"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              loading="lazy"
-              className="rounded-xl"
+              loading="eager"
+              className="rounded-xl shadow-lg shadow-orange-500/20"
               title={`${music.song} by ${music.artist}`}
             />
-            <p className="text-zinc-500 text-xs text-center mt-2">
-              ▶️ Press play above to preview
+            <p className="text-orange-400 text-sm text-center mt-3 font-medium">
+              🎵 30-second preview • Free to listen
             </p>
           </div>
         )}

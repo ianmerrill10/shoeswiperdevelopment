@@ -36,6 +36,7 @@ const FeedPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [showShareToast, setShowShareToast] = useState(false);
   const [activeTab, setActiveTab] = useState<FeedTab>('foryou');
+  const [hasAutoOpenedMusic, setHasAutoOpenedMusic] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sort shoes for trending tab - by view_count + favorite_count
@@ -95,6 +96,18 @@ const FeedPage: React.FC = () => {
     loadShoes(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-open music panel when first shoe with music loads
+  useEffect(() => {
+    if (!hasAutoOpenedMusic && shoes.length > 0 && shoes[0]?.music) {
+      // Small delay to let the UI render first
+      const timer = setTimeout(() => {
+        openMusicPanel();
+        setHasAutoOpenedMusic(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shoes, hasAutoOpenedMusic, openMusicPanel]);
 
   useEffect(() => {
     if (shoes[currentIndex]) {

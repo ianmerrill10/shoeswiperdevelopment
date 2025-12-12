@@ -35,26 +35,15 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
 
-  // Check if onboarding should be shown
+  // Skip onboarding - go straight to shoe swiping
   useEffect(() => {
-    const checkOnboarding = () => {
-      try {
-        const stored = localStorage.getItem(ONBOARDING_KEY);
-        if (stored) {
-          const data = JSON.parse(stored);
-          setShowOnboarding(!data.completed);
-        } else {
-          // First visit - show onboarding
-          setShowOnboarding(true);
-        }
-      } catch {
-        // On error, show onboarding
-        setShowOnboarding(true);
-      }
-      setOnboardingChecked(true);
-    };
-
-    checkOnboarding();
+    // Auto-complete onboarding for new users so they see shoes immediately
+    const stored = localStorage.getItem(ONBOARDING_KEY);
+    if (!stored) {
+      localStorage.setItem(ONBOARDING_KEY, JSON.stringify({ completed: true }));
+    }
+    setShowOnboarding(false);
+    setOnboardingChecked(true);
   }, []);
 
   const handleOnboardingComplete = () => {
