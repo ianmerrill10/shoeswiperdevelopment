@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Push notification permission and delivery management hook.
@@ -86,7 +87,8 @@ export const usePushNotifications = () => {
     if (!isSupported) return null;
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      const existing = await navigator.serviceWorker.getRegistration('/');
+      const registration = existing || await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
       });
 
@@ -112,8 +114,6 @@ export const usePushNotifications = () => {
         // In production, you'd use a VAPID key here
         // applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-
-      const { supabase } = await import('../lib/supabaseClient');
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
@@ -198,7 +198,6 @@ export const usePushNotifications = () => {
     // Remove from server
     if (!DEMO_MODE) {
       try {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -223,7 +222,6 @@ export const usePushNotifications = () => {
 
   const syncSettingsToServer = async (newSettings: PushSettings) => {
     try {
-      const { supabase } = await import('../lib/supabaseClient');
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {

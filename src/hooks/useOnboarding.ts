@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * User onboarding flow state management hook.
@@ -70,7 +71,6 @@ export const useOnboarding = () => {
         }
       } else {
         // In production, check Supabase for user preferences
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -104,7 +104,6 @@ export const useOnboarding = () => {
       if (DEMO_MODE) {
         localStorage.setItem(ONBOARDING_KEY, JSON.stringify(newState));
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {

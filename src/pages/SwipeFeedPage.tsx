@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FaBell, FaCheck } from 'react-icons/fa';
 import { useSneakers } from '../hooks/useSneakers';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -34,45 +33,114 @@ const SwipeFeedPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [page, setPage] = useState(0);
   const [showShareToast, setShowShareToast] = useState(false);
-  const [exitingShoeId, setExitingShoeId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const currentIndexRef = useRef(0);
+  const shoesLengthRef = useRef(0);
+  const prefetchedUrlsRef = useRef<Set<string>>(new Set());
+  const rafIdRef = useRef<number | null>(null);
 
-  const loadShoes = useCallback(async () => {
-    const data = await getInfiniteFeed(page, 10);
-    setShoes(prev => [...prev, ...data]);
-    setPage(prev => prev + 1);
-  }, [page, getInfiniteFeed]);
-
-  const handleOpenShoePanel = useCallback(() => {
-    if (shoes[currentIndex]) {
-      trackPanelOpen('shoe', shoes[currentIndex].id);
-      openShoePanel(shoes[currentIndex].id);
+  const loadShoes = useCallback(async (pageToLoad: number) => {
+    const data = await getInfiniteFeed(pageToLoad, 10);
+    if (data.length > 0) {
+      setShoes(prev => {
+        const existingIds = new Set(prev.map(s => s.id));
+        const newShoes = data.filter(s => !existingIds.has(s.id));
+        return [...prev, ...newShoes];
+      });
+      setPage(pageToLoad + 1);
     }
-  }, [shoes, currentIndex, trackPanelOpen, openShoePanel]);
+  }, [getInfiniteFeed]);
 
-  const handleOpenMusicPanel = useCallback(() => {
-    if (shoes[currentIndex]) {
-      trackPanelOpen('music', shoes[currentIndex].id);
-      openMusicPanel();
-    }
-  }, [shoes, currentIndex, trackPanelOpen, openMusicPanel]);
+  const scrollToIndex = useCallback((index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const top = index * container.clientHeight;
+    container.scrollTo({ top, behavior: 'smooth' });
+  }, []);
+
+  const handleOpenShoePanel = useCallback((shoe: Shoe) => {
+    trackPanelOpen('shoe', shoe.id);
+    openShoePanel(shoe.id);
+  }, [trackPanelOpen, openShoePanel]);
+
+  const handleOpenMusicPanel = useCallback((shoe: Shoe) => {
+    trackPanelOpen('music', shoe.id);
+    openMusicPanel();
+  }, [trackPanelOpen, openMusicPanel]);
 
   useEffect(() => {
-    loadShoes();
-  }, [loadShoes]);
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   useEffect(() => {
-    if (shoes[currentIndex]) {
-      trackView(shoes[currentIndex].id);
-    }
+    shoesLengthRef.current = shoes.length;
+  }, [shoes.length]);
+
+  useEffect(() => {
+    loadShoes(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (shoes[currentIndex]) trackView(shoes[currentIndex].id);
   }, [currentIndex, shoes, trackView]);
+
+  // Prefetch next images for smoother scroll
+  useEffect(() => {
+    const next = [currentIndex + 1, currentIndex + 2]
+      .map(i => shoes[i])
+      .filter((s): s is Shoe => Boolean(s));
+
+    next.forEach((shoe) => {
+      if (!shoe.image_url) return;
+      if (prefetchedUrlsRef.current.has(shoe.image_url)) return;
+      prefetchedUrlsRef.current.add(shoe.image_url);
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = shoe.image_url;
+    });
+  }, [currentIndex, shoes]);
 
   // Load more when near end
   useEffect(() => {
-    if (currentIndex >= shoes.length - 3 && !loading) {
-      loadShoes();
+    if (currentIndex >= shoes.length - 3 && !loading && shoes.length > 0) {
+      loadShoes(page);
     }
-  }, [currentIndex, shoes.length, loading, loadShoes]);
+  }, [currentIndex, shoes.length, loading, loadShoes, page]);
+
+  // Track current index via rAF-throttled scroll (lighter than observing N slides)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateIndexFromScroll = () => {
+      rafIdRef.current = null;
+
+      const height = container.clientHeight;
+      if (height <= 0) return;
+
+      const idx = Math.round(container.scrollTop / height);
+      const clamped = Math.max(0, Math.min(shoesLengthRef.current - 1, idx));
+      if (clamped !== currentIndexRef.current) setCurrentIndex(clamped);
+    };
+
+    const onScroll = () => {
+      if (rafIdRef.current != null) return;
+      rafIdRef.current = window.requestAnimationFrame(updateIndexFromScroll);
+    };
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    // Initialize on mount / list changes
+    onScroll();
+
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+      if (rafIdRef.current != null) {
+        window.cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [shoes.length]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -81,16 +149,20 @@ const SwipeFeedPage: React.FC = () => {
 
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setCurrentIndex(prev => Math.max(0, prev - 1));
+        const next = Math.max(0, currentIndexRef.current - 1);
+        scrollToIndex(next);
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setCurrentIndex(prev => Math.min(shoes.length - 1, prev + 1));
+        const next = Math.min(shoesLengthRef.current - 1, currentIndexRef.current + 1);
+        scrollToIndex(next);
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        handleOpenShoePanel();
+        const shoe = shoes[currentIndexRef.current];
+        if (shoe) handleOpenShoePanel(shoe);
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        handleOpenMusicPanel();
+        const shoe = shoes[currentIndexRef.current];
+        if (shoe) handleOpenMusicPanel(shoe);
       } else if (e.key === 'Escape') {
         closeShoePanel();
         closeMusicPanel();
@@ -100,7 +172,7 @@ const SwipeFeedPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, shoes.length, handleOpenShoePanel, handleOpenMusicPanel, closeShoePanel, closeMusicPanel, closeNotificationsPanel]);
+  }, [shoes, handleOpenShoePanel, handleOpenMusicPanel, closeShoePanel, closeMusicPanel, closeNotificationsPanel, scrollToIndex]);
 
   const handleBuyClick = (shoe: Shoe) => {
     trackClick(shoe.id);
@@ -125,7 +197,7 @@ const SwipeFeedPage: React.FC = () => {
           url: shareData.url,
         });
         trackShare(shoe.id, 'native');
-      } catch (err) {
+      } catch {
         if (import.meta.env.DEV) console.warn('Share cancelled');
       }
     } else {
@@ -139,36 +211,18 @@ const SwipeFeedPage: React.FC = () => {
   };
 
   const handleSwipeRight = useCallback(async (shoe: Shoe) => {
-    // Like/favorite the shoe
     const wasAlreadyFavorite = isFavorite(shoe.id);
     const success = await toggleFavorite(shoe.id);
-    if (success) {
-      trackFavorite(shoe.id, wasAlreadyFavorite ? 'remove' : 'add');
-    }
-    
-    // Move to next shoe after animation
-    setExitingShoeId(shoe.id);
-    setTimeout(() => {
-      setExitingShoeId(null);
-      setCurrentIndex(prev => Math.min(shoes.length - 1, prev + 1));
-    }, 500);
-  }, [isFavorite, toggleFavorite, trackFavorite, shoes.length]);
+    if (success) trackFavorite(shoe.id, wasAlreadyFavorite ? 'remove' : 'add');
+  }, [isFavorite, toggleFavorite, trackFavorite]);
 
-  const handleSwipeLeft = useCallback((shoe: Shoe) => {
-    // Skip/dislike the shoe - debug log for development only
-    // eslint-disable-next-line no-console
-    if (import.meta.env.DEV) console.log('Swiped left on', shoe.name);
-    
-    // Move to next shoe after animation
-    setExitingShoeId(shoe.id);
-    setTimeout(() => {
-      setExitingShoeId(null);
-      setCurrentIndex(prev => Math.min(shoes.length - 1, prev + 1));
-    }, 300);
-  }, [shoes.length]);
+  const handleSwipeLeft = useCallback((_shoe: Shoe) => {
+    // Skip to next item (TikTok-style feed still advances vertically)
+    const idx = Math.min(shoesLengthRef.current - 1, currentIndexRef.current + 1);
+    scrollToIndex(idx);
+  }, [scrollToIndex]);
 
   const currentShoe = shoes[currentIndex];
-  const nextShoe = shoes[currentIndex + 1];
 
   if (loading && shoes.length === 0) {
     return (
@@ -195,7 +249,7 @@ const SwipeFeedPage: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="h-screen bg-zinc-950 relative overflow-hidden"
+      className="h-[100svh] bg-zinc-950 relative overflow-y-scroll snap-y snap-mandatory overscroll-y-contain no-scrollbar touch-pan-y"
     >
       {/* Notification Bell - Fixed Position */}
       <button
@@ -217,38 +271,39 @@ const SwipeFeedPage: React.FC = () => {
         </span>
       </div>
 
-      {/* Card Stack */}
-      <div className="absolute inset-0">
-        {/* Next card (behind) */}
-        {nextShoe && (
-          <div className="absolute inset-0 scale-95 opacity-50">
-            <img
-              src={nextShoe.image_url}
-              alt={nextShoe.name}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/95" />
-          </div>
-        )}
+      {/* Vertical Snap Feed */}
+      <div className="relative">
+        {shoes.map((shoe, idx) => {
+          const favorite = isFavorite(shoe.id);
+          const isActive = idx === currentIndex;
+          const isNext = idx === currentIndex + 1;
+          const imageLoading = isActive || isNext ? 'eager' : 'lazy';
+          const imageFetchPriority = isActive ? 'high' : 'auto';
 
-        {/* Current swipeable card */}
-        <AnimatePresence mode="wait">
-          {currentShoe && exitingShoeId !== currentShoe.id && (
+          return (
+          <div
+            key={shoe.id}
+            data-swipe-index={idx}
+            className="h-[100svh] snap-start snap-always relative"
+          >
             <SwipeableCard
-              key={currentShoe.id}
-              shoe={currentShoe}
+              shoe={shoe}
+              enableDrag={false}
               onSwipeRight={handleSwipeRight}
               onSwipeLeft={handleSwipeLeft}
               onCardClick={handleOpenShoePanel}
               onBuyClick={handleBuyClick}
               onShareClick={handleShare}
               onMusicClick={handleOpenMusicPanel}
-              isFavorite={isFavorite(currentShoe.id)}
-              isInCloset={isFavorite(currentShoe.id)}
-              showMusicBar={!!currentShoe.music}
+              isFavorite={favorite}
+              isInCloset={favorite}
+              showMusicBar={!!shoe.music}
+              imageLoading={imageLoading}
+              imageFetchPriority={imageFetchPriority}
             />
-          )}
-        </AnimatePresence>
+          </div>
+          );
+        })}
       </div>
 
       {/* Shoe Panel - Opens on Left Arrow */}

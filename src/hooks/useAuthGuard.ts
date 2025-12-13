@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DEMO_MODE, ALLOWED_EMAILS } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 // Only import Supabase types/client if not in demo mode
 type User = {
@@ -47,8 +48,6 @@ export const useAuthGuard = () => {
 
     // PRODUCTION MODE: Use Supabase auth
     const initAuth = async () => {
-      const { supabase } = await import('../lib/supabaseClient');
-
       // Get initial session
       supabase.auth.getSession().then(({ data: { session } }) => {
         const currentUser = session?.user ?? null;

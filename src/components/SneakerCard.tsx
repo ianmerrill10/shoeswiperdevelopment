@@ -55,9 +55,9 @@ export const SneakerCard: React.FC<Props> = ({ shoe, variant = 'grid' }) => {
             onClick={toggleLike}
             aria-label={isLiked ? `Remove ${shoe.name} from favorites` : `Add ${shoe.name} to favorites`}
             aria-pressed={isLiked}
-            className="absolute top-2 right-2 p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:text-red-500 transition-colors"
+            className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-sm text-white hover:text-red-500 transition-colors"
           >
-            {isLiked ? <FaHeart className="text-red-500" aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
+            {isLiked ? <FaHeart className="text-red-500 text-lg" aria-hidden="true" /> : <FaRegHeart className="text-lg" aria-hidden="true" />}
           </button>
         </div>
         

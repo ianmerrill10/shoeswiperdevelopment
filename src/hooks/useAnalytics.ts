@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Event tracking hook for user interactions, affiliate clicks, and engagement metrics.
@@ -117,7 +118,6 @@ export const useAnalytics = () => {
 
     // PRODUCTION MODE: Send to Supabase
     try {
-      const { supabase } = await import('../lib/supabaseClient');
 
       await supabase.from('analytics_events').insert({
         event_type: event,
@@ -221,7 +221,6 @@ export const useAnalytics = () => {
     }
 
     // PRODUCTION: Query Supabase
-    const { supabase } = await import('../lib/supabaseClient');
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
     const [

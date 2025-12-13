@@ -14,10 +14,13 @@ interface SwipeableCardProps {
   onCardClick?: (shoe: Shoe) => void;
   onBuyClick?: (shoe: Shoe) => void;
   onShareClick?: (shoe: Shoe) => void;
-  onMusicClick?: () => void;
+  onMusicClick?: (shoe: Shoe) => void;
   isFavorite?: boolean;
   isInCloset?: boolean;
   showMusicBar?: boolean;
+  enableDrag?: boolean;
+  imageLoading?: 'eager' | 'lazy';
+  imageFetchPriority?: 'high' | 'low' | 'auto';
 }
 
 const SwipeableCard: React.FC<SwipeableCardProps> = ({
@@ -31,6 +34,9 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   isFavorite = false,
   isInCloset = false,
   showMusicBar = true,
+  enableDrag = true,
+  imageLoading = 'lazy',
+  imageFetchPriority = 'auto',
 }) => {
   const { prefersReducedMotion } = useReducedMotion();
   const { trigger: triggerHaptic } = useHaptics();
@@ -135,19 +141,29 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
 
   const handleMusicClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onMusicClick?.();
+    onMusicClick?.(shoe);
   };
+
+  const dragProps = enableDrag
+    ? {
+        drag: 'x' as const,
+        dragConstraints: { left: 0, right: 0, top: 0, bottom: 0 },
+        dragElastic: 0.9,
+        onDragStart: handleDragStart,
+        onDrag: handleDrag,
+        onDragEnd: handleDragEnd,
+      }
+    : {};
 
   return (
     <motion.div
-      className="relative w-full h-full touch-none select-none overflow-hidden"
+      className={
+        enableDrag
+          ? 'relative w-full h-full touch-none select-none overflow-hidden flex flex-col bg-zinc-950'
+          : 'relative w-full h-full touch-pan-y select-none overflow-hidden flex flex-col bg-zinc-950'
+      }
       style={{ x, y, rotate, scale, boxShadow }}
-      drag="x"
-      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      dragElastic={0.9}
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
+      {...dragProps}
       whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
       transition={prefersReducedMotion ? { duration: 0 } : {
         type: 'spring',
@@ -157,92 +173,43 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       role="article"
       aria-label={`${shoe.brand} ${shoe.name}. Swipe right to like, left to skip.`}
     >
-      {/* Background Image */}
-      <img
-        src={shoe.image_url}
-        alt={`${shoe.brand} ${shoe.name}${shoe.colorway ? ` in ${shoe.colorway}` : ''}`}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        draggable={false}
-      />
+      {/* Image Container - fills available space, shoe fully visible */}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center bg-zinc-900">
+        <img
+          src={shoe.image_url}
+          alt={`${shoe.brand} ${shoe.name}${shoe.colorway ? ` in ${shoe.colorway}` : ''}`}
+          className="max-w-full max-h-full w-auto h-auto object-contain pointer-events-none"
+          draggable={false}
+          loading={imageLoading}
+          decoding="async"
+          fetchPriority={imageFetchPriority}
+        />
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/95 pointer-events-none" aria-hidden="true" />
-
-      {/* Like Indicator (Right Swipe) */}
-      <motion.div
-        className="absolute top-1/4 left-8 z-20 pointer-events-none"
-        style={{ opacity: likeOpacity }}
-      >
-        <div className="bg-green-500 rounded-lg px-6 py-3 border-4 border-green-400 rotate-[-15deg]">
-          <span className="text-white font-black text-2xl tracking-wider">LIKE</span>
-        </div>
-      </motion.div>
-
-      {/* Dislike Indicator (Left Swipe) */}
-      <motion.div
-        className="absolute top-1/4 right-8 z-20 pointer-events-none"
-        style={{ opacity: dislikeOpacity }}
-      >
-        <div className="bg-red-500 rounded-lg px-6 py-3 border-4 border-red-400 rotate-[15deg]">
-          <span className="text-white font-black text-2xl tracking-wider">NOPE</span>
-        </div>
-      </motion.div>
-
-      {/* Content */}
-      <div className="absolute bottom-32 left-0 right-16 p-6 z-10">
-        {/* Brand & Tags */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
-            {shoe.brand}
-          </span>
-          {shoe.is_featured && (
-            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-              🔥 HOT
-            </span>
-          )}
-        </div>
-
-        {/* Name */}
-        <h1 className="text-2xl font-black text-white leading-tight mb-2 drop-shadow-lg">
-          {shoe.name}
-        </h1>
-
-        {/* Style Tags */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {shoe.style_tags?.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="bg-zinc-800/80 backdrop-blur-sm text-zinc-300 text-xs px-2 py-1 rounded"
+        {/* Like/Dislike Indicators (only when dragging is enabled) */}
+        {enableDrag && (
+          <>
+            <motion.div
+              className="absolute top-1/4 left-8 z-20 pointer-events-none"
+              style={{ opacity: likeOpacity }}
             >
-              #{tag}
-            </span>
-          ))}
-        </div>
+              <div className="bg-green-500 rounded-lg px-6 py-3 border-4 border-green-400 rotate-[-15deg]">
+                <span className="text-white font-black text-2xl tracking-wider">LIKE</span>
+              </div>
+            </motion.div>
 
-        {/* Price - Only shown when Amazon API is connected */}
-        {shouldShowPrice(shoe.price) && (
-          <div className="flex items-center gap-3 mb-4">
-            <span className="text-3xl font-bold text-orange-400">
-              {formatPrice(shoe.price)}
-            </span>
-          </div>
+            <motion.div
+              className="absolute top-1/4 right-8 z-20 pointer-events-none"
+              style={{ opacity: dislikeOpacity }}
+            >
+              <div className="bg-red-500 rounded-lg px-6 py-3 border-4 border-red-400 rotate-[15deg]">
+                <span className="text-white font-black text-2xl tracking-wider">NOPE</span>
+              </div>
+            </motion.div>
+          </>
         )}
 
-        {/* Buy Button */}
-        <motion.button
-          onClick={handleBuyClick}
-          aria-label={`Buy ${shoe.name} on Amazon`}
-          className="w-full bg-white text-black font-black py-4 rounded-xl flex items-center justify-center gap-3 text-base shadow-lg"
-          whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
-          transition={{ duration: 0.1 }}
-        >
-          <FaAmazon className="text-2xl" aria-hidden="true" />
-          BUY ON AMAZON
-        </motion.button>
-      </div>
-
-      {/* Side Actions */}
-      <div className="absolute right-3 bottom-44 flex flex-col gap-5 z-10" role="group" aria-label="Sneaker actions">
+        {/* Side Actions - positioned inside image area */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-10" role="group" aria-label="Sneaker actions">
         <motion.button
           onClick={(e) => {
             e.stopPropagation();
@@ -312,14 +279,68 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
           </div>
           <span className="text-xs font-bold text-white drop-shadow" aria-hidden="true">Skip</span>
         </motion.button>
+        </div>
       </div>
 
-      {/* Music Bar */}
+      {/* Content Section - below image, not overlaying */}
+      <div className="flex-shrink-0 bg-zinc-950 px-4 pt-3 pb-2 safe-bottom">
+        {/* Brand & Tags */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">
+            {shoe.brand}
+          </span>
+          {shoe.is_featured && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              🔥 HOT
+            </span>
+          )}
+        </div>
+
+        {/* Name */}
+        <h1 className="text-xl font-black text-white leading-tight mb-1">
+          {shoe.name}
+        </h1>
+
+        {/* Style Tags */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {shoe.style_tags?.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+
+        {/* Price - Only shown when Amazon API is connected */}
+        {shouldShowPrice(shoe.price) && (
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-2xl font-bold text-orange-400">
+              {formatPrice(shoe.price)}
+            </span>
+          </div>
+        )}
+
+        {/* Buy Button */}
+        <motion.button
+          onClick={handleBuyClick}
+          aria-label={`Buy ${shoe.name} on Amazon`}
+          className="w-full bg-white text-black font-black py-3 rounded-xl flex items-center justify-center gap-3 text-base shadow-lg"
+          whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+          transition={{ duration: 0.1 }}
+        >
+          <FaAmazon className="text-2xl" aria-hidden="true" />
+          BUY ON AMAZON
+        </motion.button>
+      </div>
+
+      {/* Music Bar - positioned at bottom of image area */}
       {showMusicBar && shoe.music && (
         <motion.button
           onClick={handleMusicClick}
           aria-label={`Now playing: ${shoe.music.song} by ${shoe.music.artist}. Tap for music links.`}
-          className="absolute bottom-20 left-4 right-4 flex items-center gap-3 bg-black/40 backdrop-blur-sm rounded-full px-3 py-2 z-10"
+          className="absolute bottom-[180px] left-4 right-4 flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 z-10"
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
         >
           {/* Spinning Disc */}
@@ -356,4 +377,4 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   );
 };
 
-export default SwipeableCard;
+export default React.memo(SwipeableCard);

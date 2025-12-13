@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Referral program management hook.
@@ -89,7 +90,6 @@ export const useReferral = () => {
         }
       } else {
         // PRODUCTION MODE: Load from Supabase
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -140,7 +140,6 @@ export const useReferral = () => {
         localStorage.setItem(REFERRAL_STATS_KEY, JSON.stringify(newStats));
         if (import.meta.env.DEV) console.warn('[Demo] Referral share tracked');
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -169,8 +168,6 @@ export const useReferral = () => {
           localStorage.setItem(REFERRAL_STATS_KEY, JSON.stringify(stats));
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
-
         // Find the referrer and increment their click count
         await supabase.rpc('track_referral_click', { referrer_code: referrerCode });
       }
@@ -201,8 +198,6 @@ export const useReferral = () => {
           localStorage.setItem(REFERRAL_STATS_KEY, JSON.stringify(stats));
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
-
         // Process the referral in Supabase
         await supabase.rpc('process_referral_signup', {
           referrer_code: referrerCode,
@@ -246,7 +241,7 @@ export const useReferral = () => {
           url,
         });
         return { success: true, method: 'native' };
-      } catch (err) {
+      } catch {
         if (import.meta.env.DEV) console.warn('Share cancelled');
         return { success: false, method: 'cancelled' };
       }
@@ -265,7 +260,6 @@ export const useReferral = () => {
           return JSON.parse(stored);
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {

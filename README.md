@@ -2,7 +2,7 @@
 
 > 👟 TikTok-style sneaker discovery marketplace with AI outfit matching and NFT authenticity
 
-[![Deploy](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/dadsellsgadgets/shoeswiper)
+[![Deploy](https://vercel.com/button)](https://vercel.com/new)
 
 ## Features
 
@@ -29,7 +29,7 @@
 ```bash
 # Clone and install
 git clone https://github.com/dadsellsgadgets/shoeswiper.git
-cd shoeswiper/shoeswiper-complete
+cd shoeswiper/shoeswiper_canonical
 npm install
 
 # Development (Demo Mode)
@@ -37,6 +37,9 @@ npm run dev
 ```
 
 ## Production Deployment
+
+ShoeSwiper is a Vite + React SPA using React Router. Production hosting must serve static assets from `dist/` and rewrite all non-file routes to `index.html`.
+Vercel is the recommended deploy target; this repo includes a `vercel.json` SPA routing config.
 
 ### 1. Supabase Setup
 
@@ -64,7 +67,7 @@ supabase secrets set RESEND_API_KEY=xxx
 
 ### 2. Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env` and configure (frontend-safe variables only):
 
 ```env
 VITE_SUPABASE_URL=https://xxx.supabase.co
@@ -76,11 +79,8 @@ VITE_SHOW_PRICES=true
 ### 3. Seed Database
 
 ```bash
-# Generate SQL from seed data
-npx tsx src/scripts/generate_seed.ts
-
-# Run in Supabase SQL Editor
-cat seed_data.sql | xclip  # Copy to clipboard
+# Optional: seed a baseline sneaker catalog
+# Use Supabase SQL editor to run the provided seed SQL.
 ```
 
 ### 4. Deploy to Vercel
@@ -89,10 +89,18 @@ cat seed_data.sql | xclip  # Copy to clipboard
 vercel --prod
 ```
 
+Or set in the Vercel UI:
+
+- **Framework Preset**: Vite
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm ci` (recommended)
+- **Node.js**: 20+
+
 ## Project Structure
 
-```
-shoeswiper-complete/
+```text
+shoeswiper_canonical/
 ├── src/
 │   ├── components/     # React components
 │   ├── hooks/          # Custom React hooks
@@ -116,6 +124,10 @@ shoeswiper-complete/
 | `src/lib/realSneakerSeedData.ts` | 105 real sneakers with Amazon ASINs |
 | `supabase/schema.sql` | Complete database schema with RLS |
 | `.env.example` | Environment variable template |
+
+## Deploy docs
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for a short, concrete checklist.
 
 ## Admin Access
 

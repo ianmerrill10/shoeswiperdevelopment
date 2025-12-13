@@ -5,6 +5,7 @@
 
 import { useCallback, useState } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 import { useAnalytics } from './useAnalytics';
 import {
   getSyndicationEndpoint,
@@ -126,7 +127,6 @@ export const useSocialSyndication = (): UseSocialSyndicationReturn => {
     }
 
     const endpoint = getSyndicationEndpoint();
-    const { supabase } = await import('../lib/supabaseClient');
     
     // Get the current session for auth
     const { data: { session } } = await supabase.auth.getSession();

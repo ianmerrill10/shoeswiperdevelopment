@@ -49,7 +49,7 @@ export const useAdmin = () => {
       const urlObj = new URL(url);
       urlObj.searchParams.set('tag', 'shoeswiper-20');
       return urlObj.toString();
-    } catch (e) {
+    } catch {
       return url;
     }
   };

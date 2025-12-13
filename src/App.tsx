@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthGuard } from './hooks/useAuthGuard';
 
 // Lazy-loaded Pages
-const FeedPage = lazy(() => import('./pages/FeedPage'));
+const SwipeFeedPage = lazy(() => import('./pages/SwipeFeedPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const ClosetPage = lazy(() => import('./pages/ClosetPage'));
 const CheckMyFit = lazy(() => import('./pages/CheckMyFit'));
@@ -100,7 +100,7 @@ function App() {
               <Route path="/auth" element={<Navigate to="/" />} />
 
               {/* Main App Routes */}
-              <Route path="/" element={<FeedPage />} />
+              <Route path="/" element={<SwipeFeedPage />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/closet" element={<ClosetPage />} />
               <Route path="/check-fit" element={<CheckMyFit />} />

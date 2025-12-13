@@ -68,8 +68,8 @@ const MusicPanel: React.FC<MusicPanelProps> = ({ shoe, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Spotify Embed Player - PLAYS ACTUAL MUSIC */}
-        {spotifyTrackId && (
+        {/* Spotify Embed Player - only mount when open (prevents background iframe work) */}
+        {isOpen && spotifyTrackId && (
           <div className="p-4 bg-gradient-to-b from-orange-500/20 to-zinc-900">
             {/* Big Play Prompt */}
             <div className="text-center mb-3 animate-pulse">

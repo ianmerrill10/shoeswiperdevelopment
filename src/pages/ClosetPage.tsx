@@ -58,7 +58,7 @@ const ClosetPage: React.FC = () => {
           url: shareData.url,
         });
         trackShare(shoe.id, 'native');
-      } catch (err) {
+      } catch {
         if (import.meta.env.DEV) console.warn('Share cancelled');
       }
     } else {

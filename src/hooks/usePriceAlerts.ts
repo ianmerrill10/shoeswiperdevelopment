@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Price drop alert management hook.
@@ -106,7 +107,6 @@ export const usePriceAlerts = () => {
           setAlerts(JSON.parse(stored));
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -149,7 +149,6 @@ export const usePriceAlerts = () => {
           setNotifications(JSON.parse(stored));
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -216,7 +215,6 @@ export const usePriceAlerts = () => {
         // if (import.meta.env.DEV) console.warn(`[Demo] Price alert set for ${shoe.name} at $${targetPrice}`);
         return true;
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return false;
@@ -261,7 +259,6 @@ export const usePriceAlerts = () => {
         // if (import.meta.env.DEV) console.warn(`[Demo] Price alert removed for shoe ${shoeId}`);
         return true;
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return false;
@@ -349,7 +346,7 @@ export const usePriceAlerts = () => {
             });
           }
         }
-      } catch (err) {
+      } catch {
         // if (import.meta.env.DEV) console.warn('[PriceAlerts] Push notification not available');
       }
 
@@ -366,7 +363,6 @@ export const usePriceAlerts = () => {
       setNotifications(updated);
       localStorage.setItem(PRICE_NOTIFICATIONS_KEY, JSON.stringify(updated));
     } else {
-      const { supabase } = await import('../lib/supabaseClient');
       await supabase
         .from('price_notifications')
         .update({ read: true })
@@ -384,7 +380,6 @@ export const usePriceAlerts = () => {
       setNotifications([]);
       localStorage.setItem(PRICE_NOTIFICATIONS_KEY, JSON.stringify([]));
     } else {
-      const { supabase } = await import('../lib/supabaseClient');
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {

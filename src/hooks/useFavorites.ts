@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 const FAVORITES_STORAGE_KEY = 'shoeswiper_favorites';
 
@@ -40,7 +41,6 @@ export const useFavorites = () => {
         if (import.meta.env.DEV) console.warn('[Demo] Favorites loaded from localStorage');
       } else {
         // PRODUCTION MODE: Load from Supabase
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
@@ -78,7 +78,6 @@ export const useFavorites = () => {
         return true;
       } else {
         // PRODUCTION MODE: Save to Supabase
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -127,7 +126,6 @@ export const useFavorites = () => {
         return true;
       } else {
         // PRODUCTION MODE: Remove from Supabase
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {

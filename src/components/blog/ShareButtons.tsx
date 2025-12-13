@@ -47,7 +47,7 @@ export default function ShareButtons({
           text: description,
           url,
         });
-      } catch (err) {
+      } catch {
         // User cancelled or error
       }
     }

@@ -126,11 +126,16 @@ describe('ProfilePage', () => {
     vi.clearAllMocks();
   });
 
-  it('should render loading state initially', () => {
+  it('should render loading state initially', async () => {
     renderWithRouter(<ProfilePage />);
 
     // Should show loading spinner initially
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+
+    // Ensure any async state updates complete within the test (avoids act(...) warnings)
+    await waitFor(() => {
+      expect(screen.getByText('testuser')).toBeInTheDocument();
+    });
   });
 
   it('should render user profile after loading', async () => {

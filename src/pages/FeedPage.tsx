@@ -172,7 +172,7 @@ const FeedPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, displayShoes, handleOpenShoePanel, handleOpenMusicPanel, closeShoePanel, closeMusicPanel, closeNotificationsPanel]);
+  }, [currentIndex, displayShoes, shoes.length, handleOpenShoePanel, handleOpenMusicPanel, closeShoePanel, closeMusicPanel, closeNotificationsPanel]);
 
   // Touch swipe gestures for mobile
   useEffect(() => {
@@ -254,7 +254,7 @@ const FeedPage: React.FC = () => {
           url: shareData.url,
         });
         trackShare(shoe.id, 'native');
-      } catch (err) {
+      } catch {
         if (import.meta.env.DEV) console.warn('Share cancelled');
       }
     } else {

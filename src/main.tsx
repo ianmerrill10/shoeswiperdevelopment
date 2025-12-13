@@ -10,6 +10,15 @@ import './index.css';
 // Initialize web vitals monitoring
 initWebVitals();
 
+// Register service worker for offline/PWA in production
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .catch((err) => console.error('[SW] registration failed:', err));
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

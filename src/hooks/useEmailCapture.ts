@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DEMO_MODE } from '../lib/config';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Email subscription and preference management hook.
@@ -77,7 +78,6 @@ export const useEmailCapture = () => {
           });
         }
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user?.email) {
@@ -208,8 +208,6 @@ export const useEmailCapture = () => {
         if (import.meta.env.DEV) console.warn(`[Demo] Email captured: ${email} for ${source}`);
         return { success: true };
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
-
         // Upsert email subscription
         const { error } = await supabase
           .from('email_subscriptions')
@@ -257,7 +255,6 @@ export const useEmailCapture = () => {
           preferences: updatedPreferences,
         }));
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         await supabase
           .from('email_subscriptions')
           .update({
@@ -283,7 +280,6 @@ export const useEmailCapture = () => {
       if (DEMO_MODE) {
         localStorage.removeItem(EMAIL_CAPTURE_KEY);
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         await supabase
           .from('email_subscriptions')
           .update({
@@ -312,7 +308,6 @@ export const useEmailCapture = () => {
         const stored = localStorage.getItem(EMAIL_LIST_KEY);
         return stored ? JSON.parse(stored) : [];
       } else {
-        const { supabase } = await import('../lib/supabaseClient');
         const { data } = await supabase
           .from('email_subscriptions')
           .select('*')

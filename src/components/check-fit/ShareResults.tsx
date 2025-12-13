@@ -21,7 +21,7 @@ export const ShareResults: React.FC<Props> = ({ analysis, recommendations }) => 
           text: `Check out my outfit rating. AI says: "${analysis.feedback}"`,
           url: 'https://shoeswiper.com',
         });
-      } catch (err) {
+      } catch {
         if (import.meta.env.DEV) console.warn('Share canceled');
       }
     }

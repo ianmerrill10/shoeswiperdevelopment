@@ -1,5 +1,7 @@
 /// <reference types="vitest" />
 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 
 declare global {

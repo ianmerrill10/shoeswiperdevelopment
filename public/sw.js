@@ -3,7 +3,7 @@
  * Handles push notifications and offline caching
  */
 
-const CACHE_NAME = 'shoeswiper-v1';
+const CACHE_NAME = 'shoeswiper-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately
@@ -11,6 +11,8 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
+  '/manifest.json',
+  '/favicon.svg',
 ];
 
 // Install event - cache core assets
@@ -46,31 +48,70 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone and cache successful responses
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
+  const request = event.request;
+
+  // SPA navigations: network-first, but fall back to cached app shell.
+  // This makes client-side routes work even on basic static hosts.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // If the host returns a 404 for client-side routes, serve the app shell.
+          if (response.status === 404) {
+            return caches.match('/index.html').then((cachedIndex) => cachedIndex || response);
+          }
+
+          // Cache successful navigations (typically /index.html)
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then((cached) => {
+            if (cached) return cached;
+            return caches.match('/index.html').then((cachedIndex) => cachedIndex || caches.match(OFFLINE_URL));
           });
+        })
+    );
+    return;
+  }
+
+  // For static assets: cache-first (fast + reliable), refresh in background.
+  const isStaticAsset = ['script', 'style', 'image', 'font'].includes(request.destination);
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const fetchPromise = fetch(request)
+          .then((response) => {
+            if (response && response.ok && response.type === 'basic') {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+            }
+            return response;
+          })
+          .catch(() => cached);
+
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Default: network-first, fallback to cache.
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok && response.type === 'basic') {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
         }
         return response;
       })
-      .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL);
-          }
-          return new Response('Offline', { status: 503 });
-        });
-      })
+      .catch(() => caches.match(request).then((cached) => cached || new Response('Offline', { status: 503 })))
   );
 });
 
@@ -81,8 +122,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'ShoeSwiper',
     body: 'You have a new notification!',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
     tag: 'shoeswiper-notification',
     data: { url: '/' },
   };
@@ -106,6 +147,27 @@ self.addEventListener('push', (event) => {
         { action: 'open', title: 'View' },
         { action: 'dismiss', title: 'Dismiss' },
       ],
+    })
+  );
+});
+
+// Allow the web app to trigger a notification via postMessage
+self.addEventListener('message', (event) => {
+  const message = event.data;
+  if (!message || message.type !== 'SHOW_LOCAL_NOTIFICATION') return;
+
+  const payload = message.payload || {};
+  const title = payload.title || 'ShoeSwiper';
+  const body = payload.body || '';
+  const data = payload.data || { url: '/' };
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/favicon.svg',
+      badge: '/favicon.svg',
+      tag: 'shoeswiper-local-notification',
+      data,
     })
   );
 });
