@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { FaBell, FaCheck } from 'react-icons/fa';
+import { FaBell, FaCheck, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import { useSneakers } from '../hooks/useSneakers';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useFavorites } from '../hooks/useFavorites';
@@ -33,6 +33,7 @@ const SwipeFeedPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [page, setPage] = useState(0);
   const [showShareToast, setShowShareToast] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const currentIndexRef = useRef(0);
   const shoesLengthRef = useRef(0);
@@ -251,6 +252,15 @@ const SwipeFeedPage: React.FC = () => {
       ref={containerRef}
       className="h-[100svh] bg-zinc-950 relative overflow-y-scroll snap-y snap-mandatory overscroll-y-contain no-scrollbar touch-pan-y"
     >
+      {/* Sound Toggle Button - Fixed Position */}
+      <button
+        onClick={() => setSoundEnabled(!soundEnabled)}
+        className={`fixed top-4 right-16 z-30 w-11 h-11 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-90 transition-all ${soundEnabled ? 'bg-orange-500' : 'bg-black/40'}`}
+        aria-label={soundEnabled ? 'Mute music' : 'Enable music'}
+      >
+        {soundEnabled ? <FaVolumeUp className="text-white text-lg" /> : <FaVolumeMute className="text-white text-lg" />}
+      </button>
+
       {/* Notification Bell - Fixed Position */}
       <button
         onClick={openNotificationsPanel}
@@ -301,6 +311,7 @@ const SwipeFeedPage: React.FC = () => {
               imageLoading={imageLoading}
               imageFetchPriority={imageFetchPriority}
               isActive={isActive}
+              soundEnabled={soundEnabled}
             />
           </div>
           );

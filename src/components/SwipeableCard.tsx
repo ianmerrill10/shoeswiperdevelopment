@@ -22,6 +22,7 @@ interface SwipeableCardProps {
   imageLoading?: 'eager' | 'lazy';
   imageFetchPriority?: 'high' | 'low' | 'auto';
   isActive?: boolean; // When true, shows inline music player for autoplay
+  soundEnabled?: boolean; // When true, shows Spotify embed for autoplay
 }
 
 const SwipeableCard: React.FC<SwipeableCardProps> = ({
@@ -39,6 +40,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   imageLoading = 'lazy',
   imageFetchPriority = 'auto',
   isActive = false,
+  soundEnabled = false,
 }) => {
   const { prefersReducedMotion } = useReducedMotion();
   const { trigger: triggerHaptic } = useHaptics();
@@ -343,10 +345,13 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
         const spotifyMatch = shoe.music?.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/);
         const spotifyTrackId = spotifyMatch ? spotifyMatch[1] : null;
         
+        // Show inline Spotify player only when: active + soundEnabled + has Spotify URL
+        const showInlinePlayer = isActive && soundEnabled && spotifyTrackId;
+        
         return (
           <>
-            {/* Inline Spotify Embed - only loads when card is active */}
-            {isActive && spotifyTrackId && (
+            {/* Inline Spotify Embed - only loads when card is active AND sound is enabled */}
+            {showInlinePlayer && (
               <div className="absolute bottom-[180px] left-4 right-4 z-20">
                 <iframe
                   src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=0`}
@@ -361,8 +366,8 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
               </div>
             )}
             
-            {/* Fallback music bar when not active or no Spotify */}
-            {(!isActive || !spotifyTrackId) && (
+            {/* Music bar when player not showing */}
+            {!showInlinePlayer && (
               <motion.button
                 onClick={handleMusicClick}
                 aria-label={`Now playing: ${shoe.music.song} by ${shoe.music.artist}. Tap for music links.`}
@@ -389,7 +394,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
                 </div>
 
                 {/* Tap hint */}
-                <span className="text-zinc-400 text-xs flex-shrink-0" aria-hidden="true">Tap for links</span>
+                <span className="text-zinc-400 text-xs flex-shrink-0" aria-hidden="true">{soundEnabled ? 'No preview' : 'Tap 🔊 for music'}</span>
               </motion.button>
             )}
           </>
