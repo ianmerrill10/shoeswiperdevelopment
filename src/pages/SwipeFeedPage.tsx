@@ -300,6 +300,7 @@ const SwipeFeedPage: React.FC = () => {
               showMusicBar={!!shoe.music}
               imageLoading={imageLoading}
               imageFetchPriority={imageFetchPriority}
+              isActive={isActive}
             />
           </div>
           );

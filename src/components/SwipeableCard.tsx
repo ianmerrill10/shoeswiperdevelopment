@@ -21,6 +21,7 @@ interface SwipeableCardProps {
   enableDrag?: boolean;
   imageLoading?: 'eager' | 'lazy';
   imageFetchPriority?: 'high' | 'low' | 'auto';
+  isActive?: boolean; // When true, shows inline music player for autoplay
 }
 
 const SwipeableCard: React.FC<SwipeableCardProps> = ({
@@ -37,6 +38,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
   enableDrag = true,
   imageLoading = 'lazy',
   imageFetchPriority = 'auto',
+  isActive = false,
 }) => {
   const { prefersReducedMotion } = useReducedMotion();
   const { trigger: triggerHaptic } = useHaptics();
@@ -336,36 +338,63 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({
       </div>
 
       {/* Music Bar - positioned at bottom of image area */}
-      {showMusicBar && shoe.music && (
-        <motion.button
-          onClick={handleMusicClick}
-          aria-label={`Now playing: ${shoe.music.song} by ${shoe.music.artist}. Tap for music links.`}
-          className="absolute bottom-[180px] left-4 right-4 flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 z-10"
-          whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
-        >
-          {/* Spinning Disc */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center animate-spin-slow flex-shrink-0 border border-zinc-600" aria-hidden="true">
-            <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-black" />
-            </div>
-          </div>
-
-          {/* Song Info with Marquee */}
-          <div className="flex-1 overflow-hidden">
-            <div className="flex items-center gap-2">
-              <FaMusic className="text-orange-500 text-xs flex-shrink-0" aria-hidden="true" />
-              <div className="overflow-hidden whitespace-nowrap">
-                <span className="inline-block animate-marquee text-white text-sm font-medium">
-                  {shoe.music.song} • {shoe.music.artist}
-                </span>
+      {showMusicBar && shoe.music && (() => {
+        // Extract Spotify track ID for inline embed
+        const spotifyMatch = shoe.music?.spotifyUrl?.match(/track\/([a-zA-Z0-9]+)/);
+        const spotifyTrackId = spotifyMatch ? spotifyMatch[1] : null;
+        
+        return (
+          <>
+            {/* Inline Spotify Embed - only loads when card is active */}
+            {isActive && spotifyTrackId && (
+              <div className="absolute bottom-[180px] left-4 right-4 z-20">
+                <iframe
+                  src={`https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=0`}
+                  width="100%"
+                  height="80"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="eager"
+                  className="rounded-xl shadow-lg shadow-orange-500/30"
+                  title={`${shoe.music.song} by ${shoe.music.artist}`}
+                />
               </div>
-            </div>
-          </div>
+            )}
+            
+            {/* Fallback music bar when not active or no Spotify */}
+            {(!isActive || !spotifyTrackId) && (
+              <motion.button
+                onClick={handleMusicClick}
+                aria-label={`Now playing: ${shoe.music.song} by ${shoe.music.artist}. Tap for music links.`}
+                className="absolute bottom-[180px] left-4 right-4 flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 z-10"
+                whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+              >
+                {/* Spinning Disc */}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center animate-spin-slow flex-shrink-0 border border-zinc-600" aria-hidden="true">
+                  <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black" />
+                  </div>
+                </div>
 
-          {/* Tap hint */}
-          <span className="text-zinc-400 text-xs flex-shrink-0" aria-hidden="true">Tap for links</span>
-        </motion.button>
-      )}
+                {/* Song Info with Marquee */}
+                <div className="flex-1 overflow-hidden">
+                  <div className="flex items-center gap-2">
+                    <FaMusic className="text-orange-500 text-xs flex-shrink-0" aria-hidden="true" />
+                    <div className="overflow-hidden whitespace-nowrap">
+                      <span className="inline-block animate-marquee text-white text-sm font-medium">
+                        {shoe.music.song} • {shoe.music.artist}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tap hint */}
+                <span className="text-zinc-400 text-xs flex-shrink-0" aria-hidden="true">Tap for links</span>
+              </motion.button>
+            )}
+          </>
+        );
+      })()}
 
       {/* Match Celebration Overlay */}
       <MatchCelebration
